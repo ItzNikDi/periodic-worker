@@ -1,0 +1,4 @@
+ktor:
+    test:
+        values:
+            test_value: "test_123"
