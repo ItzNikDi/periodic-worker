@@ -39,8 +39,8 @@ publishing {
         }
     }
     repositories {
-        val gprUser = project.property("gpr.user") as String?
-        val gprKey = project.property("gpr.key") as String?
+        val gprUser = project.findProperty("gpr.user") as String?
+        val gprKey = project.findProperty("gpr.key") as String?
 
         if (gprUser != null && gprKey != null) {
             maven {
