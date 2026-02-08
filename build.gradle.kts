@@ -39,12 +39,17 @@ publishing {
         }
     }
     repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/ItzNikDi/PeriodicWorker")
-            credentials {
-                username = project.property("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-                password = project.property("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+        val gprUser = project.property("gpr.user") as String?
+        val gprKey = project.property("gpr.key") as String?
+
+        if (gprUser != null && gprKey != null) {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/ItzNikDi/PeriodicWorker")
+                credentials {
+                    username = gprUser
+                    password = gprKey
+                }
             }
         }
     }
