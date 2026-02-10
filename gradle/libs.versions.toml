@@ -1,5 +1,5 @@
 [versions]
-periodic-worker = "0.1.1"
+periodic-worker = "0.2.0"
 kotlin = "2.3.0"
 ktor = "3.4.0"
 coroutines-test = "1.10.2"

@@ -1,18 +1,13 @@
 import dev.nikdi.periodicworker.PeriodicWorker
 import io.ktor.server.application.*
-import io.ktor.server.config.ApplicationConfig
-import io.ktor.server.config.configLoaders
+import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -24,7 +19,6 @@ class WorkerTests {
     fun `no tasks registered does not cause errors`() = testScope.runTest {
         testApplication {
             application.install(PeriodicWorker) {
-                dispatcher = testDispatcher
                 // no tasks registered
             }
 
@@ -43,8 +37,7 @@ class WorkerTests {
 
         testApplication {
             application.install(PeriodicWorker) {
-                dispatcher = testDispatcher
-                every(1.seconds) {
+                every(1.seconds, false, testDispatcher) {
                     counter++
                 }
             }
@@ -72,11 +65,10 @@ class WorkerTests {
 
         testApplication {
             application.install(PeriodicWorker) {
-                dispatcher = testDispatcher
-                every(1.seconds) {
+                every(1.seconds, false, testDispatcher) {
                     fastCounter++
                 }
-                every(5.seconds) {
+                every(5.seconds, false, testDispatcher) {
                     slowCounter++
                 }
             }
@@ -92,14 +84,33 @@ class WorkerTests {
     }
 
     @Test
+    fun `task runs on startup`() = testScope.runTest {
+        var counter = 0
+
+        testApplication {
+            application.install(PeriodicWorker) {
+                every(1.seconds, true, testDispatcher) {
+                    counter++
+                }
+            }
+
+            startApplication()
+
+            testScheduler.advanceTimeBy(4.seconds)
+            testScheduler.runCurrent()
+
+            assertEquals(5, counter, "Startup counter was incorrect: $counter")
+        }
+    }
+
+    @Test
     fun `task exceptions do not stop periodic execution`() = testScope.runTest {
         var counter = 0
         var failureCount = 0
 
         testApplication {
             application.install(PeriodicWorker) {
-                dispatcher = testDispatcher
-                every(1.seconds) {
+                every(1.seconds, false, testDispatcher) {
                     failureCount++
                     if (failureCount < 3) {
                         throw RuntimeException("Simulated failure")
@@ -124,8 +135,7 @@ class WorkerTests {
 
         testApplication {
             application.install(PeriodicWorker) {
-                dispatcher = testDispatcher
-                every(1.seconds) {
+                every(1.seconds, false, testDispatcher) {
                     counter++
                 }
             }
@@ -150,8 +160,7 @@ class WorkerTests {
 
         testApplication {
             application.install(PeriodicWorker) {
-                dispatcher = Dispatchers.Default
-                every(100.milliseconds) {
+                every(100.milliseconds, false, Dispatchers.Default) {
                     executionThreads.add(Thread.currentThread().name)
                 }
             }
@@ -160,7 +169,10 @@ class WorkerTests {
 
             delay(500.milliseconds) // actual delay
 
-            assertTrue(executionThreads.any { it.contains("DefaultDispatcher") }, "Set wasn't populated: ${executionThreads.joinToString(", ")}")
+            assertTrue(
+                executionThreads.any { it.contains("DefaultDispatcher") },
+                "Set wasn't populated: ${executionThreads.joinToString(", ")}"
+            )
         }
     }
 
@@ -172,15 +184,13 @@ class WorkerTests {
 
         testApplication {
             application.install(PeriodicWorker) {
-                dispatcher = testDispatcher
-
-                every(1.seconds) {
+                every(1.seconds, false, testDispatcher) {
                     longTaskStarted = true
                     delay(10.seconds) // long "running" task
                     longTaskCompleted = true
                 }
 
-                every(1.seconds) {
+                every(1.seconds, false, testDispatcher) {
                     quickTaskCounter++
                 }
             }
@@ -207,9 +217,10 @@ class WorkerTests {
             }
 
             application.install(PeriodicWorker) {
-                dispatcher = testDispatcher
-                every(1.seconds) {
-                    capturedEnvironmentProperty = application.environment.config.propertyOrNull("ktor.test.values.test_value")?.getString()
+                every(1.seconds, false, testDispatcher) {
+                    capturedEnvironmentProperty =
+                        application.environment.config.propertyOrNull("ktor.test.values.test_value")?.getString()
+                    println("Time has passed...")
                 }
             }
 

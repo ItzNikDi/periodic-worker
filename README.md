@@ -7,6 +7,13 @@ A lightweight Ktor plugin for running _periodic background_ tasks.
 ----
 
 ## Installation
+0. Add the JitPack Maven repository:
+```kotlin
+repositories {
+    maven { url = uri("https://jitpack.io") }
+}
+```
+
 ### A. Using the version catalog
 
 ----
@@ -14,10 +21,10 @@ A lightweight Ktor plugin for running _periodic background_ tasks.
 
 ```toml
 [versions]
-periodic-worker = "0.1.1"
+periodic-worker = "0.2.0"
 
 [libraries]
-periodic-worker = { module = "dev.nikdi:periodic-worker", version.ref = "periodic-worker" }
+periodic-worker = { module = "com.github.ItzNikDi:periodic-worker", version.ref = "periodic-worker" }
 ```
 
 2. Add the plugin to your `build.gradle.kts`:
@@ -31,7 +38,7 @@ dependencies {
 ### B. Adding directly to `build.gradle.kts`
 ```kotlin
 dependencies {
-    implementation("dev.nikdi:periodic-worker:0.1.1")
+    implementation("com.github.ItzNikDi:periodic-worker:0.2.0")
 }
 ```
 ----
@@ -39,15 +46,17 @@ dependencies {
 ## Usage
 ```kotlin
 install(PeriodicWorker) {
-    every(30.seconds) {
+    every(period = 30.seconds) {
         println("how time flies by...")
     }
     
-    every(5.minutes) {
+    every(period = 5.minutes, runsOnStart = true) { // this will also execute on startup
         clearOldSessions() // or other tasks to run sometimes...
     }
 }
 ```
+
+**Coroutine dispatchers**, **on-startup execution** and **periods of time** are configurable on a _per-task_ level.
 
 ----
 
